@@ -164,7 +164,7 @@ var setupAccounts = function(data) {
     });
     // Remove the hidden CSS class on one of the sections with instruction on how to finish onboarding
     // for a given account type.
-    if (!!expressAccounts) {
+    if (expressAccounts.length) {
       document.querySelector('#disabled-accounts-form').classList.remove("hidden");
       wrapper.querySelector('.express').classList.remove("hidden");
     }
