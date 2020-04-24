@@ -24,8 +24,8 @@ get '/' do
   send_file File.join(settings.public_folder, 'index.html')
 end
 
-# Take a 10% cut.
 def compute_application_fee_amount(base_price, quantity)
+  # Take a 10% cut.
   (0.1 * base_price * quantity).to_i
 end
 

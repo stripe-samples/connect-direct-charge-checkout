@@ -34,8 +34,8 @@ function calculateOrderAmount($items) {
 	return 1400;
 }
 
-// Take a 10% cut.
 function calculateApplicationFeeAmount($base_price, $quantity) {
+  // Take a 10% cut.
 	return 0.1 * $base_price * $quantity;
 }
 

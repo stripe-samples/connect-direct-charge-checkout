@@ -48,8 +48,8 @@ public class Server {
         }
     }
 
-    // Take a 10% cut.
     private static int computeApplicationFeeAmount(Long basePrice, Long quantity) {
+        // Take a 10% cut.
         return (int) (basePrice * quantity * 0.1);
     }
 

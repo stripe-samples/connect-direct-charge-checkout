@@ -34,8 +34,8 @@ def get_example():
     return render_template('index.html')
 
 
-# Take a 10% cut.
 def compute_application_fee_amount(base_price, quantity):
+  # Take a 10% cut.
   return int(0.1 * base_price * quantity)
 
 
