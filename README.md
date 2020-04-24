@@ -3,6 +3,11 @@
 This Stripe sample shows you how to process a Connect [direct charge](https://stripe.com/docs/connect/direct-charges) using [Stripe Checkout](https://stripe.com/docs/payments/checkout).
 Before using this sample, you should have onboarded at least one Connect account. For more about onboarding accounts and making Connect charges, read our [step-by-step Connect guide](https://stripe.com/docs/connect/enable-payment-acceptance-guide#accept-payment).
 
+Demo url: https://eemtf.sse.codesandbox.io/
+
+Sandbox url: https://codesandbox.io/s/connect-direct-charge-checkout-eemtf
+(note: the Checkout link won't work in the inline browser on codesandbox.io)
+
 ![demo](.readme/screenshot.png)
 
 ## How to run locally
