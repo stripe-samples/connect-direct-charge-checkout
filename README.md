@@ -30,7 +30,7 @@ In your terminal shell, run the Stripe CLI command to clone the sample:
 stripe samples create connect-direct-charge-checkout
 ```
 
-The CLI will walk you through picking your integration type, server and client languages, and configuring your .env config file with your Stripe API keys.
+The CLI will walk you through picking your integration type, server and client languages. Make sure to configure your .env file as shown below.
 
 **Installing and cloning manually**
 
@@ -39,6 +39,8 @@ If you do not want to use the Stripe CLI, you can manually clone and configure t
 ```
 git clone https://github.com/stripe-samples/connect-direct-charge-checkout
 ```
+
+**Configuring your .env file**
 
 Copy the .env.example file into a file named .env in the folder of the server you want to use. For example:
 

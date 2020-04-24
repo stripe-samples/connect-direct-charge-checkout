@@ -1,6 +1,6 @@
 {
   "name": "connect-direct-charge-checkout",
-  "configureDotEnv": true,
+  "configureDotEnv": false,
   "integrations": [
     {
       "name": "main",
