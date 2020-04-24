@@ -34,6 +34,7 @@ def get_example():
     return render_template('index.html')
 
 
+# Take a 10% cut.
 def compute_application_fee_amount(base_price, quantity):
   return int(0.1 * base_price * quantity)
 
@@ -47,7 +48,7 @@ def create_checkout_session():
 
     try:
         # Create new Checkout Session for the order
-        # For full details see https:#stripe.com/docs/api/checkout/sessions/create
+        # For full details see https://stripe.com/docs/api/checkout/sessions/create
         checkout_session = stripe.checkout.Session.create(
             # ?session_id={CHECKOUT_SESSION_ID} means the redirect will have the session ID set as a query param
             success_url=domain_url + '/success.html?session_id={CHECKOUT_SESSION_ID}',

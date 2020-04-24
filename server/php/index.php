@@ -34,6 +34,7 @@ function calculateOrderAmount($items) {
 	return 1400;
 }
 
+// Take a 10% cut.
 function calculateApplicationFeeAmount($base_price, $quantity) {
 	return 0.1 * $base_price * $quantity;
 }
@@ -46,7 +47,7 @@ $app->post('/create-checkout-session', function(Request $request, Response $resp
   $quantity = $body->quantity;
 
   // Create new Checkout Session for the order
-  // For full details see https:#stripe.com/docs/api/checkout/sessions/create
+  // For full details see https://stripe.com/docs/api/checkout/sessions/create
   $checkout_session = \Stripe\Checkout\Session::create([
     'payment_method_types' => ['card'],
     'line_items' => [[

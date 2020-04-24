@@ -24,6 +24,7 @@ get '/' do
   send_file File.join(settings.public_folder, 'index.html')
 end
 
+# Take a 10% cut.
 def compute_application_fee_amount(base_price, quantity)
   (0.1 * base_price * quantity).to_i
 end
@@ -36,7 +37,7 @@ post '/create-checkout-session' do
   quantity = data['quantity'].to_i
 
   # Create new Checkout Session for the order
-  # For full details see https:#stripe.com/docs/api/checkout/sessions/create
+  # For full details see https://stripe.com/docs/api/checkout/sessions/create
   session = Stripe::Checkout::Session.create({
     # ?session_id={CHECKOUT_SESSION_ID} means the redirect will have the session ID set as a query param
     success_url: ENV['DOMAIN'] + '/success.html?session_id={CHECKOUT_SESSION_ID}',

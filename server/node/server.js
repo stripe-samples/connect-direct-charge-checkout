@@ -30,6 +30,7 @@ app.get("/", (req, res) => {
   res.sendFile(path);
 });
 
+// Take a 10% cut.
 const calculateApplicationFeeAmount = (basePrice, quantity) => .1 * basePrice * quantity;
 
 app.post('/create-checkout-session', async (req, res) => {
