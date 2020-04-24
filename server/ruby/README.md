@@ -4,7 +4,7 @@ A [Sinatra](http://sinatrarb.com/) implementation.
 
 ## Requirements
 * Ruby v2.4.5+
-* [Configured .env file](../README.md)
+* [Configured .env file](../../README.md)
 
 ## How to run
 

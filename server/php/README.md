@@ -4,7 +4,7 @@
 * PHP >= 7.1.3
 * Composer
 * [Slim](http://www.slimframework.com/)
-* [Configured .env file](../README.md)
+* [Configured .env file](../../README.md)
 
 ## How to run
 

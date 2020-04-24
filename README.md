@@ -18,8 +18,6 @@ Follow the steps below to run locally.
 
 **1. Clone and configure the sample**
 
-The Stripe CLI is the fastest way to clone and configure a sample to run locally.
-
 **Using the Stripe CLI**
 
 If you haven't already installed the CLI, follow the [installation steps](https://github.com/stripe/stripe-cli#installation) in the project README. The CLI is useful for cloning samples and locally testing webhooks and Stripe integrations.
@@ -34,11 +32,13 @@ The CLI will walk you through picking your integration type, server and client l
 
 **Installing and cloning manually**
 
-If you do not want to use the Stripe CLI, you can manually clone and configure the sample yourself:
+If you do not want to use the Stripe CLI, you can manually clone the sample yourself:
 
 ```
 git clone https://github.com/stripe-samples/connect-direct-charge-checkout
 ```
+
+Make sure to configure your .env file as shown below.
 
 **Configuring your .env file**
 

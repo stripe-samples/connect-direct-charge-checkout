@@ -4,7 +4,7 @@
 
 - Maven
 - Java
-- [Configured .env file](../README.md)
+- [Configured .env file](../../README.md)
 
 1. Build the jar
 
