@@ -113,7 +113,7 @@ def webhook_received():
 
   if event["type"] == "checkout.session.completed":
     session = event["data"]["object"]
-    handle_checkout_session(session)
+    handle_checkout_session(event.account, session)
 
   return json.dumps({"success": True}), 200
 
