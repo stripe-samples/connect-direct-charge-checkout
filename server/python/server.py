@@ -42,7 +42,7 @@ def compute_application_fee_amount(base_price, quantity):
 @app.route('/create-checkout-session', methods=['POST'])
 def create_checkout_session():
     data = json.loads(request.data)
-    domain_url = os.getenv('DOMAIN')
+    domain_url = request.headers['origin']
     quantity = int(data['quantity'])
     base_price = int(os.getenv('BASE_PRICE'))
 
