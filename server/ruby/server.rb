@@ -2,22 +2,23 @@
 
 require 'stripe'
 require 'sinatra'
+require 'sinatra/reloader'
 require 'dotenv'
 
 # Replace if using a different env file or config
 Dotenv.load
 Stripe.api_key = ENV['STRIPE_SECRET_KEY']
+Stripe.set_app_info(
+  'stripe-samples/connect-direct-charge-checkout',
+  version: '0.0.2',
+  url: 'https://github.com/stripe-samples'
+)
+Stripe.api_version = '2020-08-27'
 
 enable :sessions
 set :static, true
 set :public_folder, File.join(File.dirname(__FILE__), ENV['STATIC_DIR'])
 set :port, 4242
-
-helpers do
-  def request_headers
-    env.each_with_object({}) { |(k, v), acc| acc[Regexp.last_match(1).downcase] = v if k =~ /^http_(.*)/i; }
-  end
-end
 
 get '/' do
   content_type 'text/html'
@@ -31,33 +32,34 @@ end
 
 post '/create-checkout-session' do
   content_type 'application/json'
-  data = JSON.parse request.body.read
 
-  base_price = ENV['BASE_PRICE'].to_i
-  quantity = data['quantity'].to_i
+  base_price = ENV.fetch('BASE_PRICE', 1000).to_i
+  quantity = params[:quantity].to_i
 
   # Create new Checkout Session for the order
   # For full details see https://stripe.com/docs/api/checkout/sessions/create
   session = Stripe::Checkout::Session.create({
     # ?session_id={CHECKOUT_SESSION_ID} means the redirect will have the session ID set as a query param
-    success_url: ENV['DOMAIN'] + '/success.html?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url: ENV['DOMAIN'] + '/canceled.html',
-    payment_method_types: ['card'],
+    mode: 'payment',
+    success_url: "#{ENV.fetch('DOMAIN', 'http://localhost:4242')}/success.html?session_id={CHECKOUT_SESSION_ID}",
+    cancel_url: "#{ENV.fetch('DOMAIN', 'http://localhost:4242')}/canceled.html",
     line_items: [{
-      name: 'Guitar lesson',
-      images: ['https://i.ibb.co/2PNy7yB/guitar.png'],
+      price_data: {
+        unit_amount: base_price,
+        currency: 'USD',
+        product_data: {
+          name: 'Guitar lesson',
+          images: ['https://i.ibb.co/2PNy7yB/guitar.png'],
+        }
+      },
       quantity: quantity,
-      currency: 'USD',
-      amount: base_price
     }],
     payment_intent_data: {
       application_fee_amount: compute_application_fee_amount(base_price, quantity),
     },
-  }, stripe_account: data['account'])
+  }, stripe_account: params[:account])
 
-  {
-    sessionId: session['id']
-  }.to_json
+  redirect session.url
 end
 
 get '/config' do
@@ -66,15 +68,17 @@ get '/config' do
   {
     accounts: accounts,
     publicKey: ENV['STRIPE_PUBLISHABLE_KEY'],
-    basePrice: ENV['BASE_PRICE'],
-    currency: ENV['CURRENCY'] 
+    basePrice: ENV.fetch('BASE_PRICE', 1000),
   }.to_json
 end
 
 get '/express-dashboard-link' do
   account_id = params[:account_id]
-  link = Stripe::Account.create_login_link(account_id, redirect_url: (request.base_url))
-  {'url': link.url}.to_json
+  link = Stripe::Account.create_login_link(
+    account_id,
+    redirect_url: request.base_url
+  )
+  redirect link.url
 end
 
 post '/webhook' do
@@ -103,9 +107,15 @@ post '/webhook' do
     return
   end
 
-  if event['type'] == 'checkout.session.completed'
-    session = event['data']['object']
-    connected_account_id = event['account']
+  if event.type == 'checkout.session.completed'
+    session = event.data.object
+    connected_account_id = event.account
+    handle_checkout_session(connected_account_id, session)
+  end
+
+  if event.type == 'checkout.session.async_payment_succeeded'
+    session = event.data.object
+    connected_account_id = event.account
     handle_checkout_session(connected_account_id, session)
   end
 
@@ -114,6 +124,7 @@ end
 
 def handle_checkout_session(connected_account_id, session)
   # Fulfill the purchase.
-  puts 'Connected account ID: ' + connected_account_id
-  puts 'Session: ' + session.to_s
+  puts "Connected account ID: #{connected_account_id}"
+  puts "Session: #{session.to_s}"
+  puts "Paid status: #{ session.payment_status }"
 end

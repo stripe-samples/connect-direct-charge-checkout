@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="css/normalize.css" />
     <link rel="stylesheet" href="css/global.css" />
     <script src="https://js.stripe.com/v3/"></script>
-    <script src="/script.js" defer></script>
+    <script src="/script.js"></script>
   </head>
 
   <body>
@@ -41,37 +41,43 @@
         </div>
         <!-- Section to display when at least one connected account has charges enabled -->
         <div id="enabled-accounts-section" class="hidden">
-          <section class="container">
-            <div>
-              <h1>Guitar lessons</h1>
-              <h4>$10/hour</h4>
-              <div class="item-image">
-                <img
-                  src="guitar.png"
-                  width="140"
-                  height="160"
-                />
+          <form action="/create-checkout-session" method="post">
+            <section class="container">
+              <div>
+                <h1>Guitar lessons</h1>
+                <h4>$10/hour</h4>
+                <div class="item-image">
+                  <img
+                    src="guitar.png"
+                    width="140"
+                    height="160"
+                  />
+                </div>
               </div>
-            </div>
-            <div class="quantity-setter">
-              <button class="increment-btn" id="subtract" disabled>
-                -
-              </button>
-              <input type="number" id="quantity-input" min="1" value="1" />
-              <button class="increment-btn" id="add">+</button>
-            </div>
-            <p class="sr-legal-text">Number of hours (max 10)</p>
-            <div class="sr-form-row">
-              <label for="enabled-accounts-select">Pick a teacher</label>
-              <select id="enabled-accounts-select" class="sr-select"></select>
-            </div>
-            <button
-              id="submit"
-            ></button>
-          </section>
+              <div class="quantity-setter">
+                <button type="button" class="increment-btn" id="subtract" disabled>
+                  -
+                </button>
+                <input type="number" id="quantity-input" name="quantity" min="1" value="1" />
+                <button type="button"  class="increment-btn" id="add">+</button>
+              </div>
+              <p class="sr-legal-text">Number of hours (max 10)</p>
+              <div class="sr-form-row">
+                <label for="enabled-accounts-select">Pick a teacher</label>
+                <select id="enabled-accounts-select" class="sr-select" name="account"></select>
+              </div>
+              <button id="submit"></button>
+            </section>
+          </form>
           <div id="error-message"></div>
         </div>
       </div>
     </div>
+    <script>
+      fetchConfig().then(() => {
+        initializeQuantityControl();
+        setupDisabledAccountsForm();
+      })
+    </script>
   </body>
 </html>

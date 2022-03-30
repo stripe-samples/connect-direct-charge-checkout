@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Stripe Direct Charge with Checkout</title>
+    <meta name="description" content="Stripe Direct Charge with Checkout" />
+
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="css/normalize.css" />
+    <link rel="stylesheet" href="css/global.css" />
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="/script.js"></script>
+  </head>
+
+  <body>
+    <div class="sr-root">
+      <div class="sr-main">
+        <h1>Accept a payment with direct charges and Checkout</h1>
+        <div class="spinner"></div>
+
+        <form action="/express-dashboard-link">
+          <div class="sr-form-row">
+            <label for="enabled-accounts-select">Pick a teacher</label>
+            <select id="enabled-accounts-select" class="sr-select" name="account_id"></select>
+          </div>
+
+          <button>View my teacher dashboard</button>
+        </form>
+      </div>
+    </div>
+    <script>
+      fetchConfig();
+    </script>
+  </body>
+</html>
