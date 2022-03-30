@@ -43,6 +43,12 @@ public class Server {
         port(4242);
         Dotenv dotenv = Dotenv.load();
         Stripe.apiKey = dotenv.get("STRIPE_SECRET_KEY");
+        // For sample support and debugging, not required for production:
+        Stripe.setAppInfo(
+            "stripe-samples/connect-direct-charge-checkout",
+            "0.0.1",
+            "https://github.com/stripe-samples"
+        );
         staticFiles.externalLocation(
                 Paths.get(Paths.get("").toAbsolutePath().toString(), dotenv.get("STATIC_DIR")).normalize().toString());
 
