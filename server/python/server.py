@@ -8,7 +8,13 @@ from flask import Flask, jsonify, render_template, redirect, request, session, s
 # Setup Stripe python client library
 load_dotenv(find_dotenv())
 stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
-stripe.api_version = os.getenv('STRIPE_API_VERSION', '2019-12-03')
+# For sample support and debugging, not required for production:
+stripe.set_app_info(
+    'stripe-samples/connect-direct-charge-checkout',
+    version='0.0.2',
+    url='https://github.com/stripe-samples')
+stripe.api_version = '2020-08-27'
+
 
 static_dir = str(os.path.abspath(os.path.join(__file__ , '..', os.getenv('STATIC_DIR'))))
 app = Flask(__name__, static_folder=static_dir,

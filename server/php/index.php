@@ -73,9 +73,9 @@ $app->get('/config', function (Request $request, Response $response, array $args
   $pub_key = getenv('STRIPE_PUBLISHABLE_KEY');
   $base_price = getenv('BASE_PRICE');
   $currency = getenv('CURRENCY');
-  return $response->withJson([ 
-    'publicKey' => $pub_key, 
-    'basePrice' => $base_price, 
+  return $response->withJson([
+    'publicKey' => $pub_key,
+    'basePrice' => $base_price,
     'currency' => $currency,
     'accounts' => $accounts,
   ]);
@@ -125,7 +125,7 @@ function handleCheckoutSession($connectedAccountId, $session) {
   echo 'Session: ' . $session;
 };
 
-$app->get('/', function (Request $request, Response $response, array $args) {   
+$app->get('/', function (Request $request, Response $response, array $args) {
   return $response->write(file_get_contents(getenv('STATIC_DIR') . '/index.html'));
 });
 
