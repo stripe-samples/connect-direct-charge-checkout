@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<StripeOptions>(options =>
 {
-    options.PublishableKey = Environment.GetEnvironmentVariable("STRIPE_PUBLISHABLE_KEY");
+    options.PublicKey = Environment.GetEnvironmentVariable("STRIPE_PUBLISHABLE_KEY");
     options.SecretKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
     options.BasePrice = Environment.GetEnvironmentVariable("BASE_PRICE");
     options.WebhookSecret = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
@@ -48,10 +48,22 @@ app.MapGet("/config", async (IOptions<StripeOptions> options) =>
     var service = new AccountService();
     StripeList<Account> accounts = await service.ListAsync(accOptions);
 
+    var result = accounts.Select(a => new
+    {
+        a.Id,
+        a.Type,
+        a.Email,
+        Capabilities = new
+        {
+            card_payments = a.Capabilities.CardPayments
+        },
+        Charges_enabled = a.ChargesEnabled
+    });
+
     return new
     {
-        Accounts = accounts,
-        options.Value.PublishableKey,
+        Accounts = new { Data = result },
+        options.Value.PublicKey,
         options.Value.BasePrice
     };
 });
@@ -123,7 +135,7 @@ app.MapPost("/webhook", async (HttpRequest request, IOptions<StripeOptions> opti
     {
         var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
         app.Logger.LogInformation($"Session ID: {session.Id}");
-        app.Logger.LogInformation($"Connected Account ID: {stripeEvent.Account }");
+        app.Logger.LogInformation($"Connected Account ID: {stripeEvent.Account}");
     }
 
     return Results.Ok(new { Received = true });
