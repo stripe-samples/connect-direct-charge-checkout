@@ -1,3 +1,10 @@
+<?php
+
+require_once 'shared.php';
+
+$accounts = $stripe->accounts->all(['limit' => 10]);
+
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -16,7 +23,6 @@
     <div class="sr-root">
       <div class="sr-main">
         <h1>Accept a payment with direct charges and Checkout</h1>
-        <div class="spinner"></div>
         <!-- Section to display when no connected accounts have been created -->
         <div id="no-accounts-section" class="hidden">
           <div>You need to <a href="https://stripe.com/docs/connect/enable-payment-acceptance-guide#create-account">create an account</a> before you can process a payment.</div>
@@ -32,7 +38,9 @@
             <div class="sr-form-row">
               <label for="disabled-accounts-select">Disabled account</label>
               <!-- Options are added to this select in JS -->
-              <select id="disabled-accounts-select" class="sr-select"></select>
+              <select id="disabled-accounts-select" class="sr-select">
+
+              </select>
             </div>
             <div class="sr-form-row">
               <button type="submit" class='full-width'>View Express dashboard</button>
@@ -40,8 +48,9 @@
           </form>
         </div>
         <!-- Section to display when at least one connected account has charges enabled -->
-        <div id="enabled-accounts-section" class="hidden">
-          <form action="/create-checkout-session" method="post">
+        <?php if(count($accounts) > 0) { ?>
+        <div id="enabled-accounts-section">
+          <form action="/create-checkout-session.php" method="post">
             <section class="container">
               <div>
                 <h1>Guitar lessons</h1>
@@ -64,20 +73,26 @@
               <p class="sr-legal-text">Number of hours (max 10)</p>
               <div class="sr-form-row">
                 <label for="enabled-accounts-select">Pick a teacher</label>
-                <select id="enabled-accounts-select" class="sr-select" name="account"></select>
+                <select id="enabled-accounts-select" class="sr-select" name="account">
+                  <?php foreach($accounts as $account){
+                     if($account->charges_enabled) { ?>
+                    <option value="<?= $account->id ?>"><?= $account->email ?></option>
+                  <?php }} ?>
+                </select>
               </div>
               <button id="submit"></button>
             </section>
           </form>
           <div id="error-message"></div>
         </div>
+        <?php } ?>
       </div>
     </div>
     <script>
-      fetchConfig().then(() => {
-        initializeQuantityControl();
-        setupDisabledAccountsForm();
-      })
+      window.config = {
+        basePrice: "<?= $_ENV['BASE_PRICE'] ?>",
+      }
+      initializeQuantityControl();
     </script>
   </body>
 </html>

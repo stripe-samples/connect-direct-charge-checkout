@@ -25,6 +25,8 @@ import com.stripe.model.LoginLink;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionCreateParams;
+import com.stripe.param.AccountListParams;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.net.Webhook;
 import com.stripe.net.RequestOptions;
@@ -32,31 +34,21 @@ import com.stripe.net.RequestOptions;
 public class Server {
     private static Gson gson = new Gson();
 
-    static class PostBody {
-        @SerializedName("quantity")
-        Long quantity;
-
-        @SerializedName("account")
-        String account;
-
-        public Long getQuantity() {
-            return quantity;
-        }
-
-        public String getAccount() {
-            return account;
-        }
-    }
-
-    private static int computeApplicationFeeAmount(Long basePrice, Long quantity) {
+    private static Long computeApplicationFeeAmount(Long basePrice, Long quantity) {
         // Take a 10% cut.
-        return (int) (basePrice * quantity * 0.1);
+        return (Long) Double.valueOf(basePrice * quantity * 0.1).longValue();
     }
 
     public static void main(String[] args) {
         port(4242);
         Dotenv dotenv = Dotenv.load();
         Stripe.apiKey = dotenv.get("STRIPE_SECRET_KEY");
+        // For sample support and debugging, not required for production:
+        Stripe.setAppInfo(
+            "stripe-samples/connect-direct-charge-checkout",
+            "0.0.1",
+            "https://github.com/stripe-samples"
+        );
         staticFiles.externalLocation(
                 Paths.get(Paths.get("").toAbsolutePath().toString(), dotenv.get("STATIC_DIR")).normalize().toString());
 
@@ -69,63 +61,63 @@ public class Server {
         });
 
         post("/create-checkout-session", (request, response) -> {
-            response.type("application/json");
-            PostBody postBody = gson.fromJson(request.body(), PostBody.class);
+            Long basePrice = new Long(dotenv.get("BASE_PRICE", "1000"));
+            Long quantity = new Long(request.queryParams("quantity"));
+            String accountId = request.queryParams("account");
+            String domainUrl = dotenv.get("DOMAIN", "http://localhost:4242");
 
-            // Create new Checkout Session for the order
-            // For full details see https://stripe.com/docs/api/checkout/sessions/create
-            Map<String, Object> params = new HashMap<String, Object>();
+            SessionCreateParams params =
+                SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setSuccessUrl(domainUrl + "/success.html?session_id={CHECKOUT_SESSION_ID}")
+                .setCancelUrl(domainUrl + "/canceled.html")
+                .setPaymentIntentData(
+                    SessionCreateParams.PaymentIntentData.builder()
+                    .setApplicationFeeAmount(computeApplicationFeeAmount(basePrice, quantity))
+                    .build()
+                )
+                .addLineItem(
+                    SessionCreateParams.LineItem.builder()
+                        .setQuantity(quantity)
+                        .setPriceData(
+                            SessionCreateParams.LineItem.PriceData.builder()
+                            .setCurrency("usd")
+                            .setUnitAmount(basePrice)
+                            .setProductData(
+                                SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                .setName("Guitar Lesson")
+                                .addImage("https://i.ibb.co/2PNy7yB/guitar.png")
+                                .build())
+                            .build())
+                        .build())
+                .build();
 
-            Long basePrice = new Long(dotenv.get("BASE_PRICE"));
-            Long quantity = postBody.getQuantity();
-            String domainUrl = dotenv.get("DOMAIN");
+            // Set the Stripe Account header.
+            RequestOptions requestParams = RequestOptions.builder()
+                .setStripeAccount(accountId)
+                .build();
 
-            ArrayList<String> paymentMethodTypes = new ArrayList<>();
-            paymentMethodTypes.add("card");
-            params.put("payment_method_types", paymentMethodTypes);
-
-            ArrayList<String> images = new ArrayList<>();
-            images.add("https://i.ibb.co/2PNy7yB/guitar.png");
-
-            ArrayList<HashMap<String, Object>> lineItems = new ArrayList<>();
-            HashMap<String, Object> lineItem = new HashMap<String, Object>();
-            lineItem.put("name", "Guitar lesson");
-            lineItem.put("images", images);
-            lineItem.put("amount", basePrice);
-            lineItem.put("currency", "USD");
-            lineItem.put("quantity", quantity);
-            lineItems.add(lineItem);
-            params.put("line_items", lineItems);
-
-            HashMap<String, Object> paymentIntentData = new HashMap<String, Object>();
-            paymentIntentData.put("application_fee_amount", computeApplicationFeeAmount(basePrice, quantity));
-            params.put("payment_intent_data", paymentIntentData);
-
-            // ?session_id={CHECKOUT_SESSION_ID} means the redirect will have the session ID set as a query param
-            params.put("success_url", domainUrl + "/success.html?session_id={CHECKOUT_SESSION_ID}");
-            params.put("cancel_url", domainUrl + "/canceled.html");
-
-            // Set the account passed from the front-end as the Stripe-Account header
-            String account = postBody.getAccount();
-            RequestOptions requestOptions = RequestOptions.builder().setStripeAccount(account).build();
-            Session session = Session.create(params, requestOptions);
-
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("sessionId", session.getId());
-            return gson.toJson(responseData);
+            try {
+                Session session = Session.create(params, requestParams);
+                response.redirect(session.getUrl(), 303);
+                return "";
+            } catch(StripeException ex) {
+                Map<String, Object> responseData = new HashMap<>();
+                responseData.put("error", "Request failed");
+                return gson.toJson(responseData);
+            }
         });
 
         get("/config", (request, response) -> {
             response.type("application/json");
-
-            Map<String, Object> params = new HashMap<>();
-            params.put("limit", 10);
+            AccountListParams params = AccountListParams.builder()
+                .setLimit(10L)
+                .build();
             AccountCollection accounts = Account.list(params);
 
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("publicKey", dotenv.get("STRIPE_PUBLISHABLE_KEY"));
-            responseData.put("basePrice", dotenv.get("BASE_PRICE"));
-            responseData.put("currency", "USD");
+            responseData.put("basePrice", dotenv.get("BASE_PRICE", "1000"));
             responseData.put("accounts", accounts);
             return gson.toJson(responseData);
         });
@@ -135,10 +127,8 @@ public class Server {
             Map<String, Object> params = new HashMap<>();
             params.put("redirect_url", request.scheme() + "://" + request.host());
             LoginLink link = LoginLink.createOnAccount(accountId, params, null);
-
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("url", link.getUrl());
-            return gson.toJson(responseData);
+            response.redirect(link.getUrl(), 303);
+            return "";
         });
 
         post("/webhook", (request, response) -> {
@@ -172,13 +162,27 @@ public class Server {
                 EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
                 Session session = null;
                 if (dataObjectDeserializer.getObject().isPresent()) {
-                session = (Session) dataObjectDeserializer.getObject().get();
-                String connectedAccountId = event.getAccount();
-                handleCheckoutSession(connectedAccountId, session);
+                    session = (Session) dataObjectDeserializer.getObject().get();
+                    String connectedAccountId = event.getAccount();
+                    handleCheckoutSession(connectedAccountId, session);
                 } else {
-                // Deserialization failed, probably due to an API version mismatch.
-                // Refer to the Javadoc documentation on `EventDataObjectDeserializer` for
-                // instructions on how to handle this case, or return an error here.
+                    // Deserialization failed, probably due to an API version mismatch.
+                    // Refer to the Javadoc documentation on `EventDataObjectDeserializer` for
+                    // instructions on how to handle this case, or return an error here.
+                }
+            }
+            if ("checkout.session.async_payment_succeeded".equals(event.getType())) {
+                // Deserialize the nested object inside the event
+                EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
+                Session session = null;
+                if (dataObjectDeserializer.getObject().isPresent()) {
+                    session = (Session) dataObjectDeserializer.getObject().get();
+                    String connectedAccountId = event.getAccount();
+                    handleCheckoutSession(connectedAccountId, session);
+                } else {
+                    // Deserialization failed, probably due to an API version mismatch.
+                    // Refer to the Javadoc documentation on `EventDataObjectDeserializer` for
+                    // instructions on how to handle this case, or return an error here.
                 }
             }
 
@@ -191,5 +195,6 @@ public class Server {
         // Fulfill the purchase.
         System.out.println("Connected account ID: " + connectedAccountId);
         System.out.println("Session ID: " + session.getId());
+        System.out.println("Payment status: " + session.getPaymentStatus());
     }
 }
