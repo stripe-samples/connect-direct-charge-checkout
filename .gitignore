@@ -28,3 +28,6 @@ target/
 dist
 
 **/virtual
+
+obj/
+bin/
