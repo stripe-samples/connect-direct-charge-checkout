@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.StaticFiles.Infrastructure;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Stripe;
@@ -30,17 +31,15 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-app.UseDefaultFiles();
-app.UseStaticFiles(new StaticFileOptions()
+var staticFileOptions = new SharedOptions()
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(),
-        Environment.GetEnvironmentVariable("STATIC_DIR"))
-    ),
-    RequestPath = new PathString("")
-});
+  FileProvider = new PhysicalFileProvider(
+    Path.Combine(Directory.GetCurrentDirectory(), Environment.GetEnvironmentVariable("STATIC_DIR"))
+  ),
+};
 
-app.MapGet("/", () => Results.Redirect("index.html"));
+app.UseDefaultFiles(new DefaultFilesOptions(staticFileOptions));
+app.UseStaticFiles(new StaticFileOptions(staticFileOptions));
 
 app.MapGet("/config", async (IOptions<StripeOptions> options) =>
 {
