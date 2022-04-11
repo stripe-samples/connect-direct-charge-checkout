@@ -15,13 +15,14 @@ StripeConfiguration.AppInfo = new AppInfo
 };
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.Configure<StripeOptions>(options =>
 {
-    options.PublicKey = Environment.GetEnvironmentVariable("STRIPE_PUBLISHABLE_KEY");
-    options.SecretKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
-    options.BasePrice = Environment.GetEnvironmentVariable("BASE_PRICE");
-    options.WebhookSecret = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
+    options.PublicKey = builder.Configuration["STRIPE_PUBLISHABLE_KEY"];
+    options.SecretKey = builder.Configuration["STRIPE_SECRET_KEY"];
+    options.BasePrice = builder.Configuration["BASE_PRICE"];
+    options.WebhookSecret = builder.Configuration["STRIPE_WEBHOOK_SECRET"];
 });
 
 var app = builder.Build();
@@ -74,37 +75,44 @@ app.MapGet("/express-dashboard-link", async (HttpRequest request, string account
     return Results.Redirect(loginLink.Url);
 });
 
-app.MapPost("/create-checkout-session", async (HttpRequest request) =>
+app.MapPost("/create-checkout-session", async (IOptions<StripeOptions> options, HttpRequest request) =>
 {
     var domainURL = $"{request.Scheme}://{request.Host}";
-    var payload = await request.ReadFromJsonAsync<CreateSessionRequest>();
-    var basePrice = long.Parse(Environment.GetEnvironmentVariable("BASE_PRICE"));
+    var basePrice = long.Parse(options.Value.BasePrice);
+    var quantity = long.Parse(request.Form["quantity"]);
+    var account = request.Form["account"];
+
     var sessionOptions = new SessionCreateOptions
     {
         Mode = "payment",
-        PaymentMethodTypes = new List<string> { "card" },
+        SuccessUrl = domainURL + "/success.html?session_id={CHECKOUT_SESSION_ID}",
+        CancelUrl = domainURL + "/canceled.html",
         LineItems = new()
         {
             new()
             {
-                Name = "Guitar lesson",
-                Images = new List<string> { "https://i.ibb.co/2PNy7yB/guitar.png" },
-                Quantity = payload.Quantity,
-                Currency = "USD",
-                Amount = basePrice,
+                PriceData = new() 
+                {
+                    UnitAmount = basePrice,
+                    Currency = "USD",
+                    ProductData = new() 
+                    {
+                        Name = "Guitar lesson",
+                        Images = new List<string> { "https://i.ibb.co/2PNy7yB/guitar.png" },
+                    },
+                },
+                Quantity = quantity,
             }
         },
         PaymentIntentData = new()
         {
             ApplicationFeeAmount = 100
         },
-        SuccessUrl = domainURL + "/success.html?session_id={CHECKOUT_SESSION_ID}",
-        CancelUrl = domainURL + "/canceled.html"
     };
 
     var checkoutSerice = new SessionService();
-    var session = await checkoutSerice.CreateAsync(sessionOptions, new() { StripeAccount = payload.Account });
-    return Results.Ok(new { SessionId = session.Id });
+    var session = await checkoutSerice.CreateAsync(sessionOptions, new() { StripeAccount = account });
+    return Results.Redirect(session.Url);
 });
 
 app.MapPost("/webhook", async (HttpRequest request, IOptions<StripeOptions> options) =>
