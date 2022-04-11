@@ -70,17 +70,9 @@ app.MapGet("/config", async (IOptions<StripeOptions> options) =>
 
 app.MapGet("/express-dashboard-link", async (HttpRequest request, string account_id) =>
 {
-    var domainURL = $"{request.Scheme}://{request.Host}";
-    var options = new AccountLinkCreateOptions
-    {
-        Account = account_id,
-        ReturnUrl = domainURL,
-        Type = "account_onboarding",
-    };
-    var service = new AccountLinkService();
-    var accLink = await service.CreateAsync(options);
-
-    return Results.Ok(new { accLink.Url });
+    var service = new LoginLinkService();
+    var loginLink = await service.CreateAsync(account_id);
+    return Results.Redirect(loginLink.Url);
 });
 
 app.MapPost("/create-checkout-session", async (HttpRequest request) =>
