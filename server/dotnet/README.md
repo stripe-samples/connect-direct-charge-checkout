@@ -33,4 +33,4 @@ BASE_PRICE=1000
 dotnet run
 ```
 
-4. Go to `localhost:4242` to see the demo.
+3. Go to `localhost:4242` to see the demo.
