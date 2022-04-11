@@ -1,0 +1,6 @@
+{
+    "recommendations": [
+        "Stripe.vscode-stripe",
+        "ms-dotnettools.vscode-dotnet-pack"
+    ]
+}
