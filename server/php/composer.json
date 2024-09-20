@@ -1,7 +1,7 @@
 {
     "require": {
         "vlucas/phpdotenv": "^5.3",
-        "stripe/stripe-php": "^9.0"
+        "stripe/stripe-php": "^12.1"
     },
     "scripts": {
         "start": "php -S localhost:4242 index.php"
